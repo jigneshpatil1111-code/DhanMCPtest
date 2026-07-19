@@ -13,6 +13,10 @@ This initial scaffold includes:
 - CSV-based candle ingestion utility
 - Config loading from TOML
 - Dhan API client scaffold with env-based auth
+- Dhan margin calculator and Super Order payload support
+- Entry, stop-loss, and 1:2 target proposals
+- Maximum 5x exposure cap with 95% margin-utilization ceiling
+- Exact action-time approval gate for live order submission
 - Strategy engines for:
   - Opening Breakout
   - EMA Pullback
@@ -86,3 +90,5 @@ DHAN_CLIENT_ID=...
 - Broker integration and dashboard UI are planned next layers.
 - Dhan MCP authentication is managed by Codex, not by files in this repository.
 - Never commit access tokens. Live orders require a fresh pre-trade funds check and explicit action-time approval.
+- Dhan order APIs require Static IP whitelisting. `DHAN_LIVE_ORDERS_ENABLED` defaults to `false`.
+- The configured 5x value is a ceiling, not a guarantee; Dhan's live margin response is authoritative.

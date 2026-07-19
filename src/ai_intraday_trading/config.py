@@ -32,6 +32,8 @@ class RiskConfig:
     max_open_positions: int = 3
     daily_loss_limit_pct: float = 0.03
     assumed_slippage_pct: float = 0.0005
+    max_leverage: float = 5.0
+    max_margin_utilization_pct: float = 0.95
 
 
 @dataclass(slots=True)
@@ -46,6 +48,7 @@ class DhanApiConfig:
     access_token: str | None = None
     client_id: str | None = None
     base_url: str = "https://api.dhan.co/v2"
+    live_orders_enabled: bool = False
 
 
 def load_config(config_path: str | Path | None = None) -> AppConfig:
@@ -75,6 +78,8 @@ def load_dhan_api_config() -> DhanApiConfig:
         access_token=os.getenv("DHAN_ACCESS_TOKEN"),
         client_id=os.getenv("DHAN_CLIENT_ID"),
         base_url=os.getenv("DHAN_API_BASE_URL", "https://api.dhan.co/v2"),
+        live_orders_enabled=os.getenv("DHAN_LIVE_ORDERS_ENABLED", "false").lower()
+        in {"1", "true", "yes"},
     )
 
 

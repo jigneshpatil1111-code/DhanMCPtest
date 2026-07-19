@@ -45,6 +45,34 @@ class PositionPlan:
     quantity: int
     risk_amount: float
     capital_committed: float
+    notional_value: float = 0.0
+    leverage: float = 1.0
+    estimated_margin: float = 0.0
+
+
+@dataclass(slots=True)
+class TradeProposal:
+    correlation_id: str
+    approval_code: str
+    symbol: str
+    security_id: str
+    strategy_name: str
+    entry_price: float
+    stop_loss: float
+    target_price: float
+    quantity: int
+    risk_amount: float
+    notional_value: float
+    estimated_margin: float
+    leverage_cap: float
+    transaction_type: Literal["BUY"] = "BUY"
+    exchange_segment: Literal["NSE_EQ"] = "NSE_EQ"
+    product_type: Literal["INTRADAY"] = "INTRADAY"
+    order_type: Literal["LIMIT"] = "LIMIT"
+
+    @property
+    def confirmation_phrase(self) -> str:
+        return f"PLACE {self.approval_code}"
 
 
 @dataclass(slots=True)
