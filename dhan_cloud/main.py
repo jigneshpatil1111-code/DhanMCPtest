@@ -64,13 +64,14 @@ def download_csv(url: str) -> list[dict[str, str]]:
 
 def build_universe() -> dict[str, str]:
     constituents = download_csv(NIFTY_500_URL)
-    by_isin = {
-        row.get("ISIN Code", "").strip(): row.get("Symbol", "").strip().upper()
-        for row in constituents
-        if row.get("Series", "").strip().upper() == "EQ"
-    }
+    by_isin: dict[str, str] = {}
+    for row in constituents:
+        if row.get("Series", "").strip().upper() == "EQ":
+            isin = row.get("ISIN Code", "").strip()
+            symbol = row.get("Symbol", "").strip().upper()
+            by_isin[isin] = symbol
     if len(by_isin) != 500:
-        raise RuntimeError(f"Expected 500 Nifty constituents, found {len(by_isin)}")
+        raise RuntimeError("Expected 500 Nifty constituents, found %d" % len(by_isin))
 
     instruments = download_csv(DHAN_MASTER_URL)
     result: dict[str, str] = {}
@@ -87,8 +88,8 @@ def build_universe() -> dict[str, str]:
             result[symbol] = security_id
 
     if len(result) < 490:
-        raise RuntimeError(f"Only {len(result)} Nifty 500 securities mapped to Dhan IDs")
-    print(f"UNIVERSE_READY mapped={len(result)}")
+        raise RuntimeError("Only %d Nifty 500 securities mapped to Dhan IDs" % len(result))
+    print("UNIVERSE_READY mapped=%d" % len(result))
     return result
 
 
@@ -129,14 +130,7 @@ def quote_value(quote: dict[str, object], *names: str) -> float:
     return 0.0
 
 
-def update_candle(
-    candle: Candle | None,
-    bucket: datetime,
-    price: float,
-    cumulative_volume: float,
-    previous_volume: float,
-    vwap: float,
-) -> Candle:
+def update_candle(candle: Candle | None, bucket: datetime, price: float, cumulative_volume: float, previous_volume: float, vwap: float) -> Candle:
     volume_delta = max(0.0, cumulative_volume - previous_volume)
     if candle is None or candle.bucket != bucket:
         return Candle(bucket, price, price, price, price, volume_delta, vwap or None)
@@ -148,12 +142,7 @@ def update_candle(
     return candle
 
 
-def opening_breakout(
-    symbol: str,
-    security_id: str,
-    candles: list[Candle],
-    previous_close: float,
-) -> Signal | None:
+def opening_breakout(symbol: str, security_id: str, candles: list[Candle], previous_close: float) -> Signal | None:
     if len(candles) < 2 or previous_close <= 0:
         return None
     first, confirmation = candles[0], candles[1]
@@ -227,14 +216,16 @@ def available_balance(dhan: object) -> float:
     return 0.0
 
 
-def market_is_open(now: datetime) -> bool:
-    if now.weekday() >= 5:
-        return False
-    return clock_time(9, 15) <= now.time() <= clock_time(15, 25)
+def market_phase(now: datetime) -> str:
+    if now.weekday() >= 5 or now.time() > clock_time(15, 25):
+        return "CLOSED"
+    if now.time() < clock_time(9, 15):
+        return "PREOPEN"
+    return "OPEN"
 
 
 def run() -> None:
-    if "{{" in CLIENT_ID or "{{" in ACCESS_TOKEN:
+    if not CLIENT_ID or not ACCESS_TOKEN:
         raise RuntimeError("CLIENT_ID and ACCESS_TOKEN variables are required")
 
     universe = build_universe()
@@ -242,7 +233,7 @@ def run() -> None:
     context = DhanContext(CLIENT_ID, ACCESS_TOKEN)
     dhan = dhanhq(context)
     balance = available_balance(dhan)
-    print(f"START mode=PAPER_ONLY universe={len(universe)} balance={balance:.2f}")
+    print("START mode=PAPER_ONLY universe=%d balance=%.2f" % (len(universe), balance))
 
     candles: dict[str, deque[Candle]] = defaultdict(lambda: deque(maxlen=80))
     active: dict[str, Candle] = {}
@@ -253,8 +244,12 @@ def run() -> None:
 
     while True:
         now = datetime.now(IST)
-        if not market_is_open(now):
-            time.sleep(30)
+        phase = market_phase(now)
+        if phase == "CLOSED":
+            print("SESSION_COMPLETE time=%s" % now.isoformat())
+            break
+        if phase == "PREOPEN":
+            time.sleep(15)
             continue
 
         try:
@@ -289,10 +284,8 @@ def run() -> None:
                         candles[symbol].append(current)
                     history = list(candles[symbol])
                     security_id = universe[symbol]
-                    for signal in (
-                        opening_breakout(symbol, security_id, history, previous_close.get(symbol, 0.0)),
-                        ema_pullback(symbol, security_id, history),
-                    ):
+                    signals = (opening_breakout(symbol, security_id, history, previous_close.get(symbol, 0.0)), ema_pullback(symbol, security_id, history))
+                    for signal in signals:
                         if signal and (signal.symbol, signal.strategy, last_bucket) not in emitted:
                             candidates.append(signal)
 
@@ -301,17 +294,12 @@ def run() -> None:
                     if quantity <= 0:
                         continue
                     emitted.add((signal.symbol, signal.strategy, last_bucket))
-                    print(
-                        "PAPER_SIGNAL "
-                        f"symbol={signal.symbol} strategy={signal.strategy} entry={signal.entry:.2f} "
-                        f"stop={signal.stop:.2f} target={signal.target:.2f} quantity={quantity} "
-                        f"risk={risk_amount:.2f} score={signal.score:.2f}"
-                    )
+                    print("PAPER_SIGNAL symbol=%s strategy=%s entry=%.2f stop=%.2f target=%.2f quantity=%d risk=%.2f score=%.2f" % (signal.symbol, signal.strategy, signal.entry, signal.stop, signal.target, quantity, risk_amount, signal.score))
 
             last_bucket = bucket
             time.sleep(SCAN_INTERVAL_SECONDS)
         except Exception as exc:
-            print(f"SCAN_ERROR type={type(exc).__name__} message={exc}")
+            print("SCAN_ERROR type=%s message=%s" % (type(exc).__name__, exc))
             time.sleep(10)
 
 
