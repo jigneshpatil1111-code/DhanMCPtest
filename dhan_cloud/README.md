@@ -1,7 +1,7 @@
 # Dhan Cloud deployment
 
-This deployment is intentionally paper-only until live market logs and sandbox
-behaviour validate the two approved strategies.
+This deployment emits signal alerts to the dashboard and Telegram. It never
+calls the Dhan order API.
 
 ## Variables
 

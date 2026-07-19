@@ -258,7 +258,7 @@ def run() -> None:
     context = DhanContext(CLIENT_ID, ACCESS_TOKEN)
     dhan = dhanhq(context)
     balance = available_balance(dhan)
-    print("START mode=PAPER_ONLY universe=%d balance=%.2f" % (len(universe), balance))
+    print("START mode=SIGNAL_ONLY universe=%d balance=%.2f" % (len(universe), balance))
 
     candles: dict[str, deque[Candle]] = defaultdict(lambda: deque(maxlen=80))
     active: dict[str, Candle] = {}
