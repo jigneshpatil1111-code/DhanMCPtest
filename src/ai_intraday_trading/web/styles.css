@@ -1,0 +1,85 @@
+:root {
+  --paper: #f0eadc;
+  --ink: #12231f;
+  --lime: #d7ff3f;
+  --orange: #ff6b2c;
+  --line: rgba(18, 35, 31, .24);
+  --muted: #62706b;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--ink); }
+body { margin: 0; color: var(--ink); background: var(--paper); font-family: "Space Grotesk", sans-serif; min-height: 100vh; }
+.noise { position: fixed; inset: 0; opacity: .05; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.75'/%3E%3C/svg%3E"); }
+.shell { width: min(1440px, 100%); margin: auto; padding: 0 34px 34px; position: relative; }
+.topbar { min-height: 76px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-bottom: 1px solid var(--line); }
+.brand { color: var(--ink); text-decoration: none; font-weight: 700; font-size: 20px; letter-spacing: -.04em; }
+.brand span { color: var(--orange); }
+.market-pill { display: flex; gap: 9px; align-items: center; border: 1px solid var(--line); border-radius: 30px; padding: 8px 14px; font: 500 11px "DM Mono", monospace; text-transform: uppercase; }
+.market-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 4px rgba(255,107,44,.15); }
+.market-pill.open i { background: #4ad66d; box-shadow: 0 0 0 4px rgba(74,214,109,.15); }
+.clock { justify-self: end; font: 500 12px "DM Mono", monospace; }
+.hero { display: grid; grid-template-columns: 1.6fr .65fr; gap: 80px; padding: 68px 0 54px; align-items: end; }
+.eyebrow, .index { font: 500 11px "DM Mono", monospace; letter-spacing: .1em; }
+.hero h1 { margin: 14px 0 0; max-width: 920px; font-size: clamp(54px, 7.2vw, 112px); line-height: .88; letter-spacing: -.075em; font-weight: 600; }
+.hero h1 em { color: var(--orange); font-style: normal; }
+.hero-note { border-top: 2px solid var(--ink); padding-top: 18px; }
+.hero-note p { font-size: 18px; line-height: 1.45; letter-spacing: -.02em; }
+.route { border-top: 1px solid var(--line); margin-top: 30px; padding-top: 14px; font: 10px "DM Mono", monospace; display: flex; justify-content: space-between; gap: 10px; }
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--ink); }
+.metric { min-height: 190px; padding: 22px; border-right: 1px solid var(--ink); display: flex; flex-direction: column; }
+.metric:last-child { border-right: 0; }
+.metric > span, .metric small { font: 11px "DM Mono", monospace; text-transform: uppercase; }
+.metric strong { font-size: 78px; line-height: 1; margin: auto 0 6px; letter-spacing: -.08em; }
+.metric strong.word { font-size: clamp(34px, 4vw, 58px); }
+.metric small { opacity: .7; }
+.lime { background: var(--lime); }
+.ink { background: var(--ink); color: var(--paper); }
+.cream { background: #fffaf0; }
+.orange { background: var(--orange); }
+.workspace { display: grid; grid-template-columns: 1.6fr .8fr; border: 1px solid var(--ink); border-top: 0; }
+.panel { padding: 24px; }
+.strategies { border-right: 1px solid var(--ink); }
+.panel-head { display: flex; justify-content: space-between; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--line); font-size: 11px; }
+.strategy-row { display: grid; grid-template-columns: 56px 1fr auto; gap: 18px; align-items: center; padding: 25px 0; border-bottom: 1px solid var(--line); }
+.strategy-row:last-child { border-bottom: 0; }
+.strategy-number { width: 42px; height: 42px; border: 1px solid var(--ink); border-radius: 50%; display: grid; place-items: center; font: 500 14px "DM Mono", monospace; }
+.strategy-row h2 { margin: 0; font-size: 27px; letter-spacing: -.04em; }
+.strategy-row p { margin: 7px 0 0; color: var(--muted); }
+.active { color: #277a3c; border: 1px solid currentColor; padding: 6px 9px; font: 10px "DM Mono", monospace; }
+.guardrails ul { padding: 0; margin: 10px 0 0; list-style: none; }
+.guardrails li { display: grid; grid-template-columns: 38px 1fr; padding: 15px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.guardrails li span { color: var(--orange); font: 11px "DM Mono", monospace; }
+.signal-board { border: 1px solid var(--ink); border-top: 0; padding: 24px; }
+.empty-state { min-height: 270px; display: flex; align-items: center; justify-content: center; gap: 45px; }
+.empty-state h2 { font-size: 32px; margin: 0 0 8px; letter-spacing: -.04em; }
+.empty-state p { max-width: 540px; margin: 0; color: var(--muted); line-height: 1.6; }
+.radar { width: 120px; height: 120px; border-radius: 50%; border: 1px solid var(--ink); position: relative; background: repeating-radial-gradient(circle, transparent 0 19px, var(--line) 20px 21px); }
+.radar:before, .radar:after { content: ""; position: absolute; background: var(--line); }
+.radar:before { width: 1px; height: 100%; left: 50%; }
+.radar:after { height: 1px; width: 100%; top: 50%; }
+.radar span { position: absolute; width: 7px; height: 7px; background: var(--orange); border-radius: 50%; top: 29px; left: 75px; animation: pulse 1.8s ease-in-out infinite; }
+footer { display: flex; justify-content: space-between; gap: 20px; padding: 20px 2px 0; font: 10px "DM Mono", monospace; }
+footer a { color: var(--ink); }
+@keyframes pulse { 50% { transform: scale(1.8); box-shadow: 0 0 0 6px rgba(255,107,44,.2); } }
+@media (max-width: 900px) {
+  .shell { padding: 0 18px 24px; }
+  .topbar { grid-template-columns: 1fr auto; }
+  .market-pill { display: none; }
+  .hero { grid-template-columns: 1fr; gap: 40px; padding-top: 45px; }
+  .hero h1 { font-size: clamp(49px, 15vw, 82px); }
+  .metric-grid { grid-template-columns: repeat(2, 1fr); }
+  .metric:nth-child(2) { border-right: 0; }
+  .metric:nth-child(-n+2) { border-bottom: 1px solid var(--ink); }
+  .workspace { grid-template-columns: 1fr; }
+  .strategies { border-right: 0; border-bottom: 1px solid var(--ink); }
+}
+@media (max-width: 560px) {
+  .clock { font-size: 10px; }
+  .metric { min-height: 150px; }
+  .metric strong { font-size: 58px; }
+  .strategy-row { grid-template-columns: 45px 1fr; }
+  .strategy-row .active { grid-column: 2; width: fit-content; }
+  .empty-state { flex-direction: column; text-align: center; padding: 42px 0; }
+  footer { flex-direction: column; }
+}

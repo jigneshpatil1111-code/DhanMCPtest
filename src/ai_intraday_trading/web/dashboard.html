@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nifty 500 Signal Desk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <div class="noise"></div>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/">N5<span>//</span>DESK</a>
+      <div class="market-pill"><i id="market-dot"></i><span id="market-state">Checking market</span></div>
+      <div class="clock" id="clock">--:--:-- IST</div>
+    </header>
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">RULE-BOUND INTRADAY CONTROL ROOM</p>
+        <h1>Two signals.<br><em>Five hundred</em> names.<br>Zero guesswork.</h1>
+      </div>
+      <div class="hero-note">
+        <span class="index">01 / MANDATE</span>
+        <p>The desk rejects every stock outside Nifty 500 and every setup outside your two approved strategies.</p>
+        <div class="route">EXECUTION ROUTE <b>Dhan MCP via Codex</b></div>
+      </div>
+    </section>
+
+    <section class="metric-grid">
+      <article class="metric lime"><span>Universe</span><strong id="universe-count">500</strong><small>NSE constituents, locked</small></article>
+      <article class="metric ink"><span>Strategies</span><strong>02</strong><small>No discretionary override</small></article>
+      <article class="metric cream"><span>Order mode</span><strong class="word">GATED</strong><small>Funds + final approval</small></article>
+      <article class="metric orange"><span>Scan state</span><strong class="word" id="scan-state">WAIT</strong><small id="scan-message">Waiting for market</small></article>
+    </section>
+
+    <section class="workspace">
+      <article class="panel strategies">
+        <div class="panel-head"><span class="index">02 / ACTIVE PLAYBOOK</span><b>ONLY THESE TWO</b></div>
+        <div class="strategy-row">
+          <div class="strategy-number">A</div>
+          <div><h2>Opening Breakout</h2><p>Gap up · first candle &lt; 1% · above EMA 9 · volume confirmation</p></div>
+          <span class="active">ACTIVE</span>
+        </div>
+        <div class="strategy-row">
+          <div class="strategy-number">B</div>
+          <div><h2>EMA Pullback</h2><p>EMA 9 &gt; EMA 15 · pullback touch · VWAP aligned · volume confirmation</p></div>
+          <span class="active">ACTIVE</span>
+        </div>
+      </article>
+
+      <article class="panel guardrails">
+        <div class="panel-head"><span class="index">03 / HARD GATES</span><b>NON-NEGOTIABLE</b></div>
+        <ul>
+          <li><span>01</span>Nifty 500 membership</li>
+          <li><span>02</span>Approved strategy match</li>
+          <li><span>03</span>Intraday BUY only</li>
+          <li><span>04</span>Funds and risk check</li>
+          <li><span>05</span>Final order approval</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="signal-board">
+      <div class="panel-head"><span class="index">04 / LIVE CANDIDATES</span><b>NO FAKE SIGNALS</b></div>
+      <div class="empty-state">
+        <div class="radar"><i></i><i></i><i></i><span></span></div>
+        <div><h2>No scan has run yet.</h2><p>At market open, verified live candles can populate this board. If no setup passes every gate, no trade is the result.</p></div>
+      </div>
+    </section>
+
+    <footer>
+      <span>MARKET RISK APPLIES · SYSTEM ENFORCES RULES, NOT RETURNS</span>
+      <a href="/docs">API DOCS ↗</a>
+    </footer>
+  </main>
+  <script src="/assets/app.js" defer></script>
+</body>
+</html>

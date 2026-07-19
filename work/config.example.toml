@@ -1,0 +1,21 @@
+[opening_breakout]
+first_candle_max_range_pct = 0.01
+minimum_gap_pct = 0.002
+minimum_volume_multiple = 1.5
+ema_period = 9
+risk_reward_ratio = 2.0
+
+[ema_pullback]
+fast_ema_period = 9
+slow_ema_period = 15
+minimum_volume_multiple = 1.25
+pullback_tolerance_pct = 0.0025
+risk_reward_ratio = 2.0
+require_vwap_alignment = true
+
+[risk]
+capital = 100000.0
+risk_per_trade_pct = 0.01
+max_open_positions = 3
+daily_loss_limit_pct = 0.03
+assumed_slippage_pct = 0.0005

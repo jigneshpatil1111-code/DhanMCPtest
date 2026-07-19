@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+.venv/
+.agents/
+.codex/
+*.egg-info/
+work/data/
+work/dhan_*_result.txt
