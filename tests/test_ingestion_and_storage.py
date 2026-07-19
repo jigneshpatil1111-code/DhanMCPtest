@@ -55,6 +55,31 @@ class IngestionAndStorageTests(unittest.TestCase):
         self.assertEqual(len(candles), 1)
         self.assertEqual(candles[0].close, 100.9)
 
+    def test_signal_storage_rejects_duplicate_signal_id(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            store = SQLiteStore(Path(temp_dir) / "market.db")
+            store.initialize()
+            signal = {
+                "signal_id": "ABC-opening-2026-07-20T09:20:00+05:30",
+                "symbol": "ABC",
+                "strategy_name": "opening_breakout",
+                "entry_price": 101.0,
+                "stop_loss": 99.0,
+                "target_price": 105.0,
+                "quantity": 10,
+                "score": 2.5,
+                "created_at": "2026-07-20T09:20:00+05:30",
+            }
+
+            first_insert = store.insert_signal(signal)
+            second_insert = store.insert_signal(signal)
+            signals = store.fetch_signals()
+
+        self.assertTrue(first_insert)
+        self.assertFalse(second_insert)
+        self.assertEqual(len(signals), 1)
+        self.assertEqual(signals[0]["symbol"], "ABC")
+
 
 if __name__ == "__main__":
     unittest.main()

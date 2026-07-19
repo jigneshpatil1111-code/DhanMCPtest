@@ -51,6 +51,19 @@ SCHEMA_STATEMENTS = (
         reasons TEXT NOT NULL
     )
     """,
+    """
+    CREATE TABLE IF NOT EXISTS signal_alerts (
+        signal_id TEXT PRIMARY KEY,
+        symbol TEXT NOT NULL,
+        strategy_name TEXT NOT NULL,
+        entry_price REAL NOT NULL,
+        stop_loss REAL NOT NULL,
+        target_price REAL NOT NULL,
+        quantity INTEGER NOT NULL,
+        score REAL NOT NULL,
+        created_at TEXT NOT NULL
+    )
+    """,
 )
 
 
@@ -226,5 +239,54 @@ class SQLiteStore:
                 outcome=row[10],
                 reasons=row[11].split(" | ") if row[11] else [],
             )
+            for row in rows
+        ]
+
+    def insert_signal(self, signal: dict[str, object]) -> bool:
+        with self.connect() as connection:
+            cursor = connection.execute(
+                """
+                INSERT OR IGNORE INTO signal_alerts
+                (signal_id, symbol, strategy_name, entry_price, stop_loss, target_price, quantity, score, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    signal["signal_id"],
+                    signal["symbol"],
+                    signal["strategy_name"],
+                    signal["entry_price"],
+                    signal["stop_loss"],
+                    signal["target_price"],
+                    signal["quantity"],
+                    signal["score"],
+                    signal["created_at"],
+                ),
+            )
+            return cursor.rowcount == 1
+
+    def fetch_signals(self, limit: int = 20) -> list[dict[str, object]]:
+        with self.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT signal_id, symbol, strategy_name, entry_price, stop_loss,
+                       target_price, quantity, score, created_at
+                FROM signal_alerts
+                ORDER BY created_at DESC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [
+            {
+                "signal_id": row[0],
+                "symbol": row[1],
+                "strategy_name": row[2],
+                "entry_price": row[3],
+                "stop_loss": row[4],
+                "target_price": row[5],
+                "quantity": row[6],
+                "score": row[7],
+                "created_at": row[8],
+            }
             for row in rows
         ]

@@ -7,6 +7,8 @@ behaviour validate the two approved strategies.
 
 - `CLIENT_ID`: Dhan client ID
 - `ACCESS_TOKEN`: active Dhan access token
+- `DASHBOARD_SIGNAL_URL`: Railway `/api/signals` endpoint
+- `SIGNAL_WEBHOOK_SECRET`: same random secret configured on Railway
 
 ## Dependencies
 
@@ -19,4 +21,4 @@ Add the package names from `dependencies.txt` in the Dhan Cloud Dependencies tab
 - Product design: long intraday proposals
 - Position limits: 1% risk, three concurrent candidates, 3% daily loss guardrail,
   5x maximum exposure and 95% maximum margin utilization
-- Output: paper signals only; no order API is called by this version
+- Output: dashboard and Telegram signal alerts only; no order API is called

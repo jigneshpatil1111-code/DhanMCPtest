@@ -15,6 +15,8 @@ from dhanhq import DhanContext, dhanhq
 
 CLIENT_ID = "{{CLIENT_ID}}"
 ACCESS_TOKEN = "{{ACCESS_TOKEN}}"
+DASHBOARD_SIGNAL_URL = "{{DASHBOARD_SIGNAL_URL}}"
+SIGNAL_WEBHOOK_SECRET = "{{SIGNAL_WEBHOOK_SECRET}}"
 
 NIFTY_500_URL = "https://nsearchives.nseindia.com/content/indices/ind_nifty500list.csv"
 DHAN_MASTER_URL = "https://images.dhan.co/api-data/api-scrip-master-detailed.csv"
@@ -216,6 +218,29 @@ def available_balance(dhan: object) -> float:
     return 0.0
 
 
+def publish_signal(signal: Signal, quantity: int, created_at: datetime) -> bool:
+    payload = {
+        "signal_id": "%s-%s-%s" % (signal.symbol, signal.strategy, created_at.isoformat()),
+        "symbol": signal.symbol,
+        "strategy_name": signal.strategy,
+        "entry_price": signal.entry,
+        "stop_loss": signal.stop,
+        "target_price": signal.target,
+        "quantity": quantity,
+        "score": signal.score,
+        "created_at": created_at.isoformat(),
+    }
+    response = requests.post(
+        DASHBOARD_SIGNAL_URL,
+        json=payload,
+        headers={"X-Signal-Secret": SIGNAL_WEBHOOK_SECRET},
+        timeout=15,
+    )
+    response.raise_for_status()
+    result = response.json()
+    return bool(result.get("telegram_delivered"))
+
+
 def market_phase(now: datetime) -> str:
     if now.weekday() >= 5 or now.time() > clock_time(15, 25):
         return "CLOSED"
@@ -294,7 +319,8 @@ def run() -> None:
                     if quantity <= 0:
                         continue
                     emitted.add((signal.symbol, signal.strategy, last_bucket))
-                    print("PAPER_SIGNAL symbol=%s strategy=%s entry=%.2f stop=%.2f target=%.2f quantity=%d risk=%.2f score=%.2f" % (signal.symbol, signal.strategy, signal.entry, signal.stop, signal.target, quantity, risk_amount, signal.score))
+                    telegram_delivered = publish_signal(signal, quantity, now)
+                    print("SIGNAL symbol=%s strategy=%s entry=%.2f stop=%.2f target=%.2f quantity=%d risk=%.2f score=%.2f telegram=%s" % (signal.symbol, signal.strategy, signal.entry, signal.stop, signal.target, quantity, risk_amount, signal.score, telegram_delivered))
 
             last_bucket = bucket
             time.sleep(SCAN_INTERVAL_SECONDS)

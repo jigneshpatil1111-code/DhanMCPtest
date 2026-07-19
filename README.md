@@ -24,6 +24,7 @@ This initial scaffold includes:
 - Risk sizing logic
 - Backtesting engine
 - Simple trade simulation service
+- Authenticated live-signal dashboard ingestion and Telegram notifications
 - Market data import service
 - Trade journal query service
 - FastAPI application entrypoint scaffold
@@ -81,6 +82,9 @@ Optional environment variables for direct Dhan API access:
 ```text
 DHAN_ACCESS_TOKEN=...
 DHAN_CLIENT_ID=...
+SIGNAL_WEBHOOK_SECRET=...
+TELEGRAM_BOT_TOKEN=...
+TELEGRAM_CHAT_ID=...
 ```
 
 ## Notes

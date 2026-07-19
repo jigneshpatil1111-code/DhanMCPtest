@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from dataclasses import asdict
 from datetime import datetime
+import hmac
+import os
 from pathlib import Path
 
 try:
-    from fastapi import FastAPI
+    from fastapi import FastAPI, Header
     from fastapi import HTTPException
     from fastapi.responses import FileResponse
     from fastapi.staticfiles import StaticFiles
@@ -16,6 +18,7 @@ except ImportError:  # pragma: no cover - optional dependency
     FileResponse = None  # type: ignore[assignment]
     StaticFiles = None  # type: ignore[assignment]
     BaseModel = object  # type: ignore[assignment]
+    Header = None  # type: ignore[assignment]
 
 from ai_intraday_trading.backtest.engine import summarize_backtest
 from ai_intraday_trading.config import AppConfig, load_config
@@ -27,6 +30,7 @@ from ai_intraday_trading.services.dashboard_service import build_dashboard_snaps
 from ai_intraday_trading.services.execution_policy import validate_execution_candidate
 from ai_intraday_trading.services.journal_service import JournalService
 from ai_intraday_trading.services.market_data_service import MarketDataService
+from ai_intraday_trading.services.telegram_service import TelegramService
 from ai_intraday_trading.universe import search_nifty500
 
 
@@ -49,6 +53,18 @@ class PolicyValidationRequest(BaseModel):
     product_type: str = "INTRADAY"
 
 
+class SignalIngestRequest(BaseModel):
+    signal_id: str
+    symbol: str
+    strategy_name: str
+    entry_price: float
+    stop_loss: float
+    target_price: float
+    quantity: int
+    score: float
+    created_at: str
+
+
 def create_app():
     if FastAPI is None:
         raise RuntimeError(
@@ -65,6 +81,11 @@ def create_app():
     market_data_service = MarketDataService(store)
     journal_service = JournalService(store)
     market_data_service.initialize()
+    signal_secret = os.getenv("SIGNAL_WEBHOOK_SECRET")
+    telegram = TelegramService(
+        os.getenv("TELEGRAM_BOT_TOKEN"),
+        os.getenv("TELEGRAM_CHAT_ID"),
+    )
 
     @app.get("/", include_in_schema=False)
     def dashboard():
@@ -76,7 +97,35 @@ def create_app():
 
     @app.get("/api/dashboard")
     def dashboard_snapshot() -> dict[str, object]:
-        return build_dashboard_snapshot()
+        return build_dashboard_snapshot(
+            candidates=store.fetch_signals(),
+            telegram_enabled=telegram.enabled,
+        )
+
+    @app.post("/api/signals")
+    def ingest_signal(
+        payload: SignalIngestRequest,
+        x_signal_secret: str | None = Header(default=None),
+    ) -> dict[str, object]:
+        if not signal_secret:
+            raise HTTPException(status_code=503, detail="Signal ingestion is not configured.")
+        if not x_signal_secret or not hmac.compare_digest(x_signal_secret, signal_secret):
+            raise HTTPException(status_code=401, detail="Invalid signal secret.")
+        signal = payload.model_dump()
+        inserted = store.insert_signal(signal)
+        telegram_delivered = False
+        telegram_error = None
+        if inserted and telegram.enabled:
+            try:
+                telegram_delivered = telegram.send_signal(signal)
+            except Exception as exc:
+                telegram_error = type(exc).__name__
+        return {
+            "accepted": True,
+            "duplicate": not inserted,
+            "telegram_delivered": telegram_delivered,
+            "telegram_error": telegram_error,
+        }
 
     @app.get("/api/universe")
     def search_universe(query: str = "", limit: int = 25) -> list[dict[str, str]]:

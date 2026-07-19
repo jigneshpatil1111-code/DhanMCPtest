@@ -9,7 +9,11 @@ from ai_intraday_trading.universe import load_nifty500_members
 IST = timezone(timedelta(hours=5, minutes=30), name="IST")
 
 
-def build_dashboard_snapshot(now: datetime | None = None) -> dict[str, object]:
+def build_dashboard_snapshot(
+    now: datetime | None = None,
+    candidates: list[dict[str, object]] | None = None,
+    telegram_enabled: bool = False,
+) -> dict[str, object]:
     current = now.astimezone(IST) if now else datetime.now(IST)
     market_open = current.weekday() < 5 and time(9, 15) <= current.time() <= time(15, 30)
 
@@ -51,7 +55,12 @@ def build_dashboard_snapshot(now: datetime | None = None) -> dict[str, object]:
         },
         "scan": {
             "state": "waiting_for_market" if not market_open else "ready_for_live_data",
-            "candidates": [],
-            "message": "No live scan has run yet.",
+            "candidates": candidates or [],
+            "message": (
+                f"{len(candidates)} verified signal(s)."
+                if candidates
+                else "No verified signal has arrived yet."
+            ),
+            "telegram_enabled": telegram_enabled,
         },
     }
