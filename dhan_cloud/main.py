@@ -282,6 +282,36 @@ def run() -> None:
             quotes = extract_quotes(response)
             bucket = five_minute_bucket(now)
 
+            if last_bucket is not None and bucket != last_bucket:
+                candidates: list[Signal] = []
+                finalized = 0
+                for symbol, current in list(active.items()):
+                    if current.bucket != last_bucket:
+                        continue
+                    candles[symbol].append(current)
+                    finalized += 1
+                    history = list(candles[symbol])
+                    security_id = universe[symbol]
+                    signals = (
+                        opening_breakout(symbol, security_id, history, previous_close.get(symbol, 0.0)),
+                        ema_pullback(symbol, security_id, history),
+                    )
+                    for signal in signals:
+                        if signal and (signal.symbol, signal.strategy, last_bucket) not in emitted:
+                            candidates.append(signal)
+
+                print(
+                    "SCAN_HEARTBEAT bucket=%s quotes=%d finalized=%d candidates=%d"
+                    % (last_bucket.isoformat(), len(quotes), finalized, len(candidates))
+                )
+                for signal in sorted(candidates, key=lambda item: item.score, reverse=True)[:MAX_OPEN_POSITIONS]:
+                    quantity, risk_amount = position_size(signal, balance)
+                    if quantity <= 0:
+                        continue
+                    emitted.add((signal.symbol, signal.strategy, last_bucket))
+                    telegram_delivered = publish_signal(signal, quantity, now)
+                    print("SIGNAL symbol=%s strategy=%s entry=%.2f stop=%.2f target=%.2f quantity=%d risk=%.2f score=%.2f telegram=%s" % (signal.symbol, signal.strategy, signal.entry, signal.stop, signal.target, quantity, risk_amount, signal.score, telegram_delivered))
+
             for security_id, raw_quote in quotes.items():
                 if not isinstance(raw_quote, dict):
                     continue
@@ -301,26 +331,6 @@ def run() -> None:
                     active.get(symbol), bucket, price, cumulative_volume, previous_volume[symbol], vwap
                 )
                 previous_volume[symbol] = cumulative_volume
-
-            if last_bucket is not None and bucket != last_bucket:
-                candidates: list[Signal] = []
-                for symbol, current in list(active.items()):
-                    if current.bucket == last_bucket:
-                        candles[symbol].append(current)
-                    history = list(candles[symbol])
-                    security_id = universe[symbol]
-                    signals = (opening_breakout(symbol, security_id, history, previous_close.get(symbol, 0.0)), ema_pullback(symbol, security_id, history))
-                    for signal in signals:
-                        if signal and (signal.symbol, signal.strategy, last_bucket) not in emitted:
-                            candidates.append(signal)
-
-                for signal in sorted(candidates, key=lambda item: item.score, reverse=True)[:MAX_OPEN_POSITIONS]:
-                    quantity, risk_amount = position_size(signal, balance)
-                    if quantity <= 0:
-                        continue
-                    emitted.add((signal.symbol, signal.strategy, last_bucket))
-                    telegram_delivered = publish_signal(signal, quantity, now)
-                    print("SIGNAL symbol=%s strategy=%s entry=%.2f stop=%.2f target=%.2f quantity=%d risk=%.2f score=%.2f telegram=%s" % (signal.symbol, signal.strategy, signal.entry, signal.stop, signal.target, quantity, risk_amount, signal.score, telegram_delivered))
 
             last_bucket = bucket
             time.sleep(SCAN_INTERVAL_SECONDS)
