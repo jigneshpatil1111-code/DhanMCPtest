@@ -51,6 +51,15 @@ class DhanApiConfig:
     live_orders_enabled: bool = False
 
 
+@dataclass(slots=True)
+class AngelMarketDataConfig:
+    api_key: str | None = None
+    client_code: str | None = None
+    jwt_token: str | None = None
+    feed_token: str | None = None
+    enabled: bool = False
+
+
 def load_config(config_path: str | Path | None = None) -> AppConfig:
     if config_path is None:
         env_path = os.getenv("AI_INTRADAY_CONFIG")
@@ -79,6 +88,17 @@ def load_dhan_api_config() -> DhanApiConfig:
         client_id=os.getenv("DHAN_CLIENT_ID"),
         base_url=os.getenv("DHAN_API_BASE_URL", "https://api.dhan.co/v2"),
         live_orders_enabled=os.getenv("DHAN_LIVE_ORDERS_ENABLED", "false").lower()
+        in {"1", "true", "yes"},
+    )
+
+
+def load_angel_market_data_config() -> AngelMarketDataConfig:
+    return AngelMarketDataConfig(
+        api_key=os.getenv("ANGEL_API_KEY"),
+        client_code=os.getenv("ANGEL_CLIENT_CODE"),
+        jwt_token=os.getenv("ANGEL_JWT_TOKEN"),
+        feed_token=os.getenv("ANGEL_FEED_TOKEN"),
+        enabled=os.getenv("ANGEL_LIVE_DATA_ENABLED", "false").lower()
         in {"1", "true", "yes"},
     )
 

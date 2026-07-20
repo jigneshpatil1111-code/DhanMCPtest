@@ -23,10 +23,10 @@ class TelegramService:
             f"Entry: {float(signal['entry_price']):.2f}\n"
             f"Stop Loss: {float(signal['stop_loss']):.2f}\n"
             f"Target: {float(signal['target_price']):.2f}\n"
-            f"Quantity: {int(signal['quantity'])}\n"
+            f"Quantity: {int(signal['quantity']) or 'pending funds/margin check'}\n"
             f"Score: {float(signal['score']):.2f}\n"
             f"Time: {signal['created_at']}\n\n"
-            "Signal only. Verify in Dhan before placing any order."
+            "Approval required before any Dhan order is submitted."
         )
         body = json.dumps({"chat_id": self.chat_id, "text": message}).encode("utf-8")
         request = urllib.request.Request(

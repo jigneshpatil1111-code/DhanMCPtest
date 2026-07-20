@@ -21,11 +21,12 @@ except ImportError:  # pragma: no cover - optional dependency
     Header = None  # type: ignore[assignment]
 
 from ai_intraday_trading.backtest.engine import summarize_backtest
-from ai_intraday_trading.config import AppConfig, load_config
+from ai_intraday_trading.config import AppConfig, load_angel_market_data_config, load_config
 from ai_intraday_trading.domain.models import Candle
 from ai_intraday_trading.paths import get_project_paths
 from ai_intraday_trading.persistence.sqlite_store import SQLiteStore
 from ai_intraday_trading.services.backtest_service import run_intraday_backtest
+from ai_intraday_trading.services.angel_market_data import AngelLiveWorker
 from ai_intraday_trading.services.dashboard_service import build_dashboard_snapshot
 from ai_intraday_trading.services.execution_policy import validate_execution_candidate
 from ai_intraday_trading.services.journal_service import JournalService
@@ -87,6 +88,20 @@ def create_app():
         os.getenv("TELEGRAM_CHAT_ID"),
     )
 
+    def publish_live_signal(signal: dict[str, object]) -> None:
+        if not store.insert_signal(signal):
+            return
+        if telegram.enabled:
+            telegram.send_signal(signal)
+
+    live_worker = AngelLiveWorker(
+        load_angel_market_data_config(),
+        config,
+        publish_live_signal,
+    )
+    app.add_event_handler("startup", live_worker.start)
+    app.add_event_handler("shutdown", live_worker.stop)
+
     @app.get("/", include_in_schema=False)
     def dashboard():
         return FileResponse(web_dir / "dashboard.html")
@@ -94,6 +109,10 @@ def create_app():
     @app.get("/health")
     def health_check() -> dict[str, str]:
         return {"status": "ok"}
+
+    @app.get("/api/live/status")
+    def live_status() -> dict[str, object]:
+        return live_worker.status()
 
     @app.get("/api/dashboard")
     def dashboard_snapshot() -> dict[str, object]:
