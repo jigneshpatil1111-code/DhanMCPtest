@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from dataclasses import asdict
 from datetime import datetime
 import hmac
@@ -72,10 +73,8 @@ def create_app():
             "FastAPI is not installed. Install the project with the 'api' extras to run the web app."
         )
 
-    app = FastAPI(title="AI Intraday Trading System", version="0.1.0")
     package_root = Path(__file__).resolve().parent
     web_dir = package_root / "web"
-    app.mount("/assets", StaticFiles(directory=web_dir), name="assets")
     paths = get_project_paths()
     config = load_config(paths.config_path) if paths.config_path.exists() else AppConfig()
     store = SQLiteStore(paths.db_path)
@@ -99,8 +98,21 @@ def create_app():
         config,
         publish_live_signal,
     )
-    app.add_event_handler("startup", live_worker.start)
-    app.add_event_handler("shutdown", live_worker.stop)
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        live_worker.start()
+        try:
+            yield
+        finally:
+            live_worker.stop()
+
+    app = FastAPI(
+        title="AI Intraday Trading System",
+        version="0.1.0",
+        lifespan=lifespan,
+    )
+    app.mount("/assets", StaticFiles(directory=web_dir), name="assets")
 
     @app.get("/", include_in_schema=False)
     def dashboard():
